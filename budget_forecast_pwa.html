@@ -1,4 +1,133 @@
-<!-- ... existing code ... -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#266489" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Budget" />
+  <title>Budget &amp; Forecast</title>
+
+  <!-- Inter Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="bg-[#f8fafc] text-[#0f172a] font-sans antialiased selection:bg-[#266489]/20">
+  <!-- App Shell Container (Mobile-First Centered) -->
+  <div class="min-h-screen max-w-[480px] mx-auto bg-[#f8fafc] flex flex-col relative pb-24">
+
+    <!-- ========================================================= -->
+    <!-- TOP HEADER BAR                                            -->
+    <!-- ========================================================= -->
+    <header class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200/80 px-4 py-3 flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <div class="w-9 h-9 rounded-xl bg-[#266489] text-white flex items-center justify-center shadow-sm shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+          </svg>
+        </div>
+        <div class="min-w-0">
+          <h1 class="text-sm font-extrabold tracking-tight text-[#0f172a] truncate">Budget &amp; Forecast</h1>
+          <p id="headerSubtitle" class="text-[11px] text-slate-500 truncate">Active Month: 2026-12</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-1.5 shrink-0">
+        <!-- Connection Mode Pill -->
+        <button type="button" id="statusPill" onclick="openSettingsModal()" class="px-2.5 py-1 rounded-full text-[11px] font-bold flex items-center gap-1.5 bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition">
+          <span id="statusDot" class="w-2 h-2 rounded-full bg-amber-500"></span>
+          <span id="statusText">Demo</span>
+        </button>
+
+        <!-- Refresh Button -->
+        <button type="button" onclick="fetchBootstrap(true)" aria-label="Refresh data" class="p-2 rounded-xl text-slate-600 hover:text-[#266489] hover:bg-slate-100 active:scale-95 transition">
+          <svg id="refreshIcon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        </button>
+
+        <!-- Settings Button -->
+        <button type="button" onclick="openSettingsModal()" aria-label="Open settings" class="p-2 rounded-xl text-slate-600 hover:text-[#266489] hover:bg-slate-100 active:scale-95 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Offline Pending Queue Banner -->
+    <div id="pendingQueueBanner" class="hidden mx-4 mt-3 px-3.5 py-2.5 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2 min-w-0">
+        <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse shrink-0"></span>
+        <p id="pendingQueueText" class="text-xs font-semibold text-amber-800 truncate">1 item waiting to sync</p>
+      </div>
+      <button type="button" onclick="syncPendingQueue()" class="px-3 py-1 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shrink-0 active:scale-95 transition">
+        Sync Now
+      </button>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 px-4 pt-4 space-y-4">
+
+      <!-- ========================================================= -->
+      <!-- TAB 1: LOG (5-Second Transaction Entry)                   -->
+      <!-- ========================================================= -->
+      <section id="tab-log" class="space-y-4">
+        <form id="logForm" onsubmit="handleLogSubmit(event)" class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-4 space-y-4">
+          <!-- Expense / Income Segmented Toggle -->
+          <div class="grid grid-cols-2 gap-1.5 p-1 bg-slate-100 rounded-xl">
+            <button type="button" id="btnLogExpense" onclick="setLogType('expense')" class="py-2 rounded-lg text-sm font-semibold transition bg-white text-[#ef4444] shadow-sm">
+              Expense (-)
+            </button>
+            <button type="button" id="btnLogIncome" onclick="setLogType('income')" class="py-2 rounded-lg text-sm font-semibold transition text-slate-600 hover:text-slate-900">
+              Income (+)
+            </button>
+          </div>
+
+          <!-- Big Numeric Amount Input -->
+          <div class="bg-slate-50 rounded-2xl border border-slate-200 p-3 focus-within:border-[#266489] focus-within:ring-2 focus-within:ring-[#266489]/20 transition">
+            <label for="logAmountInput" class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-0.5">Amount</label>
+            <div class="flex items-center gap-1">
+              <span id="logSignPrefix" class="text-2xl font-extrabold text-[#ef4444]">-$</span>
+              <input
+                id="logAmountInput"
+                type="text"
+                inputmode="decimal"
+                placeholder="0.00"
+                required
+                autocomplete="off"
+                class="w-full bg-transparent text-3xl font-extrabold text-[#0f172a] placeholder-slate-300 focus:outline-none tabular-nums"
+              />
+            </div>
+          </div>
+
+          <!-- Merchant + Quick-Tap Chips -->
+          <div class="space-y-2">
+            <label for="logMerchantInput" class="block text-xs font-semibold text-slate-700">Merchant / Payee</label>
+            <input
+              id="logMerchantInput"
+              type="text"
+              placeholder="e.g., Kroger, Chick-fil-A, Target"
+              required
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-[#0f172a] placeholder-slate-400 focus:outline-none focus:border-[#266489] focus:ring-2 focus:ring-[#266489]/20"
+            />
             <div class="flex flex-wrap gap-1.5 pt-0.5">
               <button type="button" onclick="applyMerchantChip('Kroger', 'Food', 'Groceries')" class="px-2.5 py-1 rounded-full bg-slate-100 hover:bg-[#266489]/10 hover:text-[#266489] text-xs font-medium text-slate-700 active:scale-95 transition">Kroger</button>
               <button type="button" onclick="applyMerchantChip('Kroger Fuel', 'Auto', 'Gas')" class="px-2.5 py-1 rounded-full bg-slate-100 hover:bg-[#266489]/10 hover:text-[#266489] text-xs font-medium text-slate-700 active:scale-95 transition">Kroger Fuel</button>
@@ -8,7 +137,75 @@
               <button type="button" onclick="applyMerchantChip(&quot;Bollo's&quot;, 'Food', 'Coffee &amp; Drinks')" class="px-2.5 py-1 rounded-full bg-slate-100 hover:bg-[#266489]/10 hover:text-[#266489] text-xs font-medium text-slate-700 active:scale-95 transition">Bollo's</button>
             </div>
           </div>
-<!-- ... existing code ... -->
+
+          <!-- Cascading Category -> Subcategory -->
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label for="logCategorySelect" class="block text-xs font-semibold text-slate-700 mb-1">Category</label>
+              <select id="logCategorySelect" onchange="handleCategoryChange()" required class="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-[#0f172a] focus:outline-none focus:border-[#266489] focus:ring-2 focus:ring-[#266489]/20"></select>
+            </div>
+            <div>
+              <label for="logSubcategorySelect" class="block text-xs font-semibold text-slate-700 mb-1">Subcategory</label>
+              <select id="logSubcategorySelect" required class="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-[#0f172a] focus:outline-none focus:border-[#266489] focus:ring-2 focus:ring-[#266489]/20"></select>
+            </div>
+          </div>
+
+          <!-- Date + Collapsible Budget Month Override -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <label for="logDateInput" class="block text-xs font-semibold text-slate-700">Date</label>
+              <button type="button" onclick="toggleBudgetMonthRow()" class="text-[11px] font-semibold text-[#266489] hover:underline">
+                Override Budget Month?
+              </button>
+            </div>
+            <input
+              id="logDateInput"
+              type="date"
+              required
+              onchange="handleDateChange()"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-[#0f172a] focus:outline-none focus:border-[#266489] focus:ring-2 focus:ring-[#266489]/20"
+            />
+            <div id="budgetMonthRow" class="hidden pt-1">
+              <label for="logBudgetMonthInput" class="block text-[11px] font-semibold text-slate-500 mb-1">Budget Month (for early 1st-of-month paychecks)</label>
+              <input
+                id="logBudgetMonthInput"
+                type="month"
+                oninput="state.budgetMonthManual = true"
+                class="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 text-sm text-[#0f172a] focus:outline-none focus:border-[#266489]"
+              />
+            </div>
+          </div>
+
+          <!-- Account Type Pills -->
+          <div>
+            <span class="block text-xs font-semibold text-slate-700 mb-1.5">Account Type</span>
+            <div class="grid grid-cols-3 gap-2">
+              <button type="button" data-acct="Credit Card" onclick="setAccountType('Credit Card')" class="acct-pill py-2 rounded-xl text-xs font-semibold border transition bg-[#266489] text-white border-[#266489] shadow-sm">Credit Card</button>
+              <button type="button" data-acct="Checking" onclick="setAccountType('Checking')" class="acct-pill py-2 rounded-xl text-xs font-semibold border transition bg-white text-slate-600 border-slate-200 hover:bg-slate-50">Checking</button>
+              <button type="button" data-acct="Savings" onclick="setAccountType('Savings')" class="acct-pill py-2 rounded-xl text-xs font-semibold border transition bg-white text-slate-600 border-slate-200 hover:bg-slate-50">Savings</button>
+            </div>
+          </div>
+
+          <!-- Status + Notes -->
+          <div class="grid grid-cols-3 gap-3 items-end">
+            <div class="col-span-1">
+              <span class="block text-xs font-semibold text-slate-700 mb-1">Status</span>
+              <div class="grid grid-cols-2 gap-1 p-1 bg-slate-100 rounded-xl">
+                <button type="button" id="btnStatusCleared" onclick="setTxnStatus('Cleared')" class="py-1.5 rounded-lg text-[11px] font-semibold bg-white text-[#266489] shadow-sm transition">Clr</button>
+                <button type="button" id="btnStatusPending" onclick="setTxnStatus('Pending')" class="py-1.5 rounded-lg text-[11px] font-semibold text-slate-600 transition">Pnd</button>
+              </div>
+            </div>
+            <div class="col-span-2">
+              <label for="logNotesInput" class="block text-xs font-semibold text-slate-700 mb-1">Notes <span class="text-slate-400 font-normal">(optional)</span></label>
+              <input
+                id="logNotesInput"
+                type="text"
+                placeholder="Split info or memo..."
+                class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-sm text-[#0f172a] placeholder-slate-400 focus:outline-none focus:border-[#266489]"
+              />
+            </div>
+          </div>
+
           <button id="logSubmitBtn" type="submit" class="w-full py-3.5 rounded-2xl bg-[#266489] hover:bg-[#1d4e6b] text-white font-bold text-sm shadow-md shadow-[#266489]/20 active:scale-[0.99] transition flex items-center justify-center gap-2">
             <span>Save Transaction</span>
           </button>
@@ -170,7 +367,79 @@
       <!-- ========================================================= -->
       <!-- TAB 3: BUDGET (At-a-Glance Safe to Spend)                 -->
       <!-- ========================================================= -->
-<!-- ... existing code ... -->
+      <section id="tab-budget" class="hidden space-y-4">
+        <!-- Hero Liquidity Card -->
+        <div class="rounded-2xl bg-gradient-to-br from-[#266489] to-[#1a4966] text-white p-4 shadow-md space-y-3">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <p class="text-[11px] font-semibold uppercase tracking-wider text-sky-200">Net Liquid Cash</p>
+              <p id="dashNetLiquid" class="text-3xl font-extrabold tracking-tight tabular-nums mt-0.5">$3,403.27</p>
+            </div>
+            <span id="dashActiveMonthBadge" class="px-2.5 py-1 rounded-full bg-white/15 text-xs font-bold text-white backdrop-blur-sm">2026-12</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2 pt-2 border-t border-white/15 text-xs">
+            <div>
+              <p class="text-sky-200 text-[10px] uppercase font-semibold">Total Cash Reserve</p>
+              <p id="dashTotalReserve" class="font-bold text-sm tabular-nums">$25,384.23</p>
+            </div>
+            <div class="text-right">
+              <p class="text-sky-200 text-[10px] uppercase font-semibold">12-Mo Ending Cash</p>
+              <p id="dashEndingCash" class="font-bold text-sm tabular-nums">$11,033.15</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4 Compact KPI Cards -->
+        <div class="grid grid-cols-2 gap-2.5">
+          <div class="bg-white rounded-2xl border border-slate-200/80 p-3 shadow-sm">
+            <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Active Inflow</p>
+            <p id="kpiInflowVal" class="text-lg font-extrabold text-[#10b981] tabular-nums mt-0.5">$0.00</p>
+            <p id="kpiInflowSub" class="text-[11px] text-slate-500 truncate">Target: $9,515.38</p>
+          </div>
+          <div class="bg-white rounded-2xl border border-slate-200/80 p-3 shadow-sm">
+            <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Active Outflow</p>
+            <p id="kpiOutflowVal" class="text-lg font-extrabold text-[#0f172a] tabular-nums mt-0.5">$0.00</p>
+            <p id="kpiOutflowSub" class="text-[11px] text-slate-500 truncate">Target: $9,189.64</p>
+          </div>
+          <div class="bg-white rounded-2xl border border-slate-200/80 p-3 shadow-sm">
+            <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Active Net Cash</p>
+            <p id="kpiNetVal" class="text-lg font-extrabold text-[#0f172a] tabular-nums mt-0.5">$0.00</p>
+            <p id="kpiNetSub" class="text-[11px] text-slate-500 truncate">Target: $325.74</p>
+          </div>
+          <div class="bg-white rounded-2xl border border-slate-200/80 p-3 shadow-sm">
+            <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">12-Mo Net Outlook</p>
+            <p id="kpiOutlookVal" class="text-lg font-extrabold text-[#266489] tabular-nums mt-0.5">$7,629.88</p>
+            <p id="kpiOutlookSub" class="text-[11px] text-slate-500 truncate">Avg/Mo: $635.82</p>
+          </div>
+        </div>
+
+        <!-- Category & Sinking Fund Rollup -->
+        <div class="space-y-3 pt-1">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold text-[#0f172a]">Category Remaining</h3>
+            <span id="dashHealthStatus" class="text-xs font-bold text-[#10b981]">Status: ✅ HEALTHY</span>
+          </div>
+
+          <!-- Search & Filter Pills -->
+          <div class="relative">
+            <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input id="rollupSearch" type="search" oninput="renderRollupList()" placeholder="Search groceries, gas, medical..." class="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-[#0f172a] placeholder-slate-400 focus:outline-none focus:border-[#266489] focus:ring-2 focus:ring-[#266489]/20" />
+          </div>
+
+          <div class="flex gap-1.5 overflow-x-auto pb-1">
+            <button type="button" data-rfilter="All" onclick="setRollupFilter('All')" class="rfilter-pill px-3 py-1.5 rounded-full text-xs font-semibold bg-[#266489] text-white shrink-0 transition">All</button>
+            <button type="button" data-rfilter="Variable" onclick="setRollupFilter('Variable')" class="rfilter-pill px-3 py-1.5 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-600 shrink-0 transition">Variable</button>
+            <button type="button" data-rfilter="Sinking_Fund" onclick="setRollupFilter('Sinking_Fund')" class="rfilter-pill px-3 py-1.5 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-600 shrink-0 transition">Sinking Funds</button>
+            <button type="button" data-rfilter="Fixed" onclick="setRollupFilter('Fixed')" class="rfilter-pill px-3 py-1.5 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-600 shrink-0 transition">Fixed</button>
+            <button type="button" data-rfilter="Cash_Hit" onclick="setRollupFilter('Cash_Hit')" class="rfilter-pill px-3 py-1.5 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-600 shrink-0 transition">Cash Hit</button>
+          </div>
+
+          <div id="rollupList" class="space-y-2.5"></div>
+        </div>
+      </section>
+
       <!-- ========================================================= -->
       <!-- TAB 4: SNAPSHOT (Weekly 3-Number Balance Update)          -->
       <!-- ========================================================= -->
@@ -186,8 +455,45 @@
               <input id="snapLastUpdatedInput" type="date" required class="mt-0.5 px-2 py-1 rounded-lg border border-slate-200 text-xs font-bold text-[#266489] bg-slate-50 focus:outline-none focus:border-[#266489]" />
             </div>
           </div>
-<!-- ... existing code ... -->
-    <!-- Sticky Bottom Navigation Bar (4 Tabs) -->
+
+          <div>
+            <label for="snapChecking" class="block text-xs font-semibold text-slate-700 mb-1">Total Checking ($)</label>
+            <input id="snapChecking" type="text" inputmode="decimal" oninput="updateSnapshotPreview()" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-base font-bold tabular-nums text-[#0f172a] focus:outline-none focus:border-[#266489] focus:ring-2 focus:ring-[#266489]/20" />
+          </div>
+
+          <div>
+            <label for="snapCreditCard" class="block text-xs font-semibold text-slate-700 mb-1">Current Credit Card Balance ($)</label>
+            <input id="snapCreditCard" type="text" inputmode="decimal" oninput="updateSnapshotPreview()" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-base font-bold tabular-nums text-[#0f172a] focus:outline-none focus:border-[#266489] focus:ring-2 focus:ring-[#266489]/20" />
+            <p class="text-[11px] text-slate-400 mt-1">Enter positive or negative; your sheet subtracts ABS(balance) from Checking.</p>
+          </div>
+
+          <div>
+            <label for="snapSavings" class="block text-xs font-semibold text-slate-700 mb-1">Total Savings ($)</label>
+            <input id="snapSavings" type="text" inputmode="decimal" oninput="updateSnapshotPreview()" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-base font-bold tabular-nums text-[#0f172a] focus:outline-none focus:border-[#266489] focus:ring-2 focus:ring-[#266489]/20" />
+          </div>
+
+          <!-- Live Calculated Preview -->
+          <div class="rounded-2xl bg-slate-50 border border-slate-200 p-3.5 grid grid-cols-2 gap-3">
+            <div>
+              <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Net Liquid Cash</p>
+              <p id="previewNetLiquid" class="text-lg font-extrabold text-[#266489] tabular-nums mt-0.5">$0.00</p>
+            </div>
+            <div class="text-right">
+              <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total Cash Reserve</p>
+              <p id="previewTotalReserve" class="text-lg font-extrabold text-[#0f172a] tabular-nums mt-0.5">$0.00</p>
+            </div>
+          </div>
+
+          <button id="snapSubmitBtn" type="submit" class="w-full py-3.5 rounded-2xl bg-[#266489] hover:bg-[#1d4e6b] text-white font-bold text-sm shadow-md shadow-[#266489]/20 active:scale-[0.99] transition">
+            Save Snapshot to Sheet
+          </button>
+        </form>
+      </section>
+    </main>
+
+    <!-- ========================================================= -->
+    <!-- STICKY BOTTOM NAVIGATION BAR (4 TABS)                     -->
+    <!-- ========================================================= -->
     <nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-30 bg-white/95 backdrop-blur border-t border-slate-200 px-3 py-2 rounded-t-2xl shadow-[0_-4px_20px_rgba(15,23,42,0.06)]">
       <div class="grid grid-cols-4 gap-1.5">
         <button type="button" id="nav-log" onclick="switchTab('log')" class="nav-btn flex flex-col items-center justify-center py-1.5 rounded-xl text-[#266489] bg-[#266489]/10 font-semibold transition">
@@ -216,7 +522,58 @@
         </button>
       </div>
     </nav>
-<!-- ... existing code ... -->
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- SETTINGS MODAL (Stored Strictly in Device localStorage)   -->
+  <!-- ========================================================= -->
+  <div id="settingsModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
+    <div class="bg-white w-full max-w-[440px] rounded-3xl shadow-2xl border border-slate-200 p-5 space-y-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-base font-extrabold text-[#0f172a]">Connection Settings</h2>
+          <p class="text-xs text-slate-500">Saved locally on this device only</p>
+        </div>
+        <button type="button" onclick="closeSettingsModal()" class="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <form onsubmit="handleSettingsSave(event)" class="space-y-3.5">
+        <div>
+          <label for="cfgUrl" class="block text-xs font-semibold text-slate-700 mb-1">Apps Script Web App URL (/exec)</label>
+          <input id="cfgUrl" type="url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs text-[#0f172a] focus:outline-none focus:border-[#266489] focus:bg-white" />
+        </div>
+        <div>
+          <label for="cfgToken" class="block text-xs font-semibold text-slate-700 mb-1">API Token</label>
+          <input id="cfgToken" type="password" placeholder="Your secret API_TOKEN" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs text-[#0f172a] focus:outline-none focus:border-[#266489] focus:bg-white" />
+        </div>
+
+        <div class="rounded-xl bg-sky-50 border border-sky-100 p-3 text-[11px] text-[#266489] leading-relaxed">
+          Your URL and token are stored exclusively in browser <code>localStorage</code> and never uploaded to GitHub or shared with anyone else.
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 pt-1">
+          <button type="button" onclick="enableDemoMode()" class="py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 transition">
+            Use Demo Mode
+          </button>
+          <button type="submit" class="py-2.5 rounded-xl bg-[#266489] hover:bg-[#1d4e6b] text-xs font-bold text-white shadow-sm transition">
+            Save &amp; Connect
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- TOAST NOTIFICATION CONTAINER                              -->
+  <!-- ========================================================= -->
+  <div id="toast" class="pointer-events-none fixed top-16 left-1/2 -translate-x-1/2 z-50 max-w-[420px] w-[calc(100%-2rem)] opacity-0 -translate-y-2 transition-all duration-200">
+    <div id="toastInner" class="px-4 py-3 rounded-2xl shadow-lg text-xs font-bold text-white flex items-center justify-center text-center bg-[#0f172a]"></div>
+  </div>
+
   <script>
     // =========================================================================
     // 1. PWA MANIFEST INJECTION (Inline Data URI for Home Screen Install)
@@ -244,7 +601,87 @@
         // Ignore if blocked in sandboxed preview
       }
     })();
-// ... existing code ... -->
+
+    // =========================================================================
+    // 2. FALLBACK / DEMO DATA
+    // =========================================================================
+    const FALLBACK_CATEGORIES = [
+      { category: 'Income', subcategory: 'Salary', type: 'Income', monthly_target: 0 },
+      { category: 'Income', subcategory: 'Other Income & Interest', type: 'Income', monthly_target: 0 },
+      { category: 'Food', subcategory: 'Groceries', type: 'Variable', monthly_target: 1230 },
+      { category: 'Food', subcategory: 'Dining Out', type: 'Variable', monthly_target: 190 },
+      { category: 'Food', subcategory: 'Coffee & Drinks', type: 'Variable', monthly_target: 35 },
+      { category: 'Food', subcategory: 'Date Nights', type: 'Sinking_Fund', monthly_target: 0 },
+      { category: 'Auto', subcategory: 'Gas', type: 'Variable', monthly_target: 170 },
+      { category: 'Auto', subcategory: 'Maintenance & Tires', type: 'Sinking_Fund', monthly_target: 0 },
+      { category: 'Auto', subcategory: 'Auto Insurance', type: 'Fixed', monthly_target: 0 },
+      { category: 'Household', subcategory: 'Sundries', type: 'Variable', monthly_target: 125 },
+      { category: 'Housing', subcategory: 'Mortgage', type: 'Fixed', monthly_target: 0 },
+      { category: 'Housing', subcategory: 'Utilities', type: 'Variable', monthly_target: 165 },
+      { category: 'Housing', subcategory: 'Internet', type: 'Fixed', monthly_target: 0 },
+      { category: 'Home', subcategory: 'Windows Project', type: 'Cash_Hit', monthly_target: 0 },
+      { category: 'Home', subcategory: 'Maintenance & Projects', type: 'Sinking_Fund', monthly_target: 0 },
+      { category: 'Kids', subcategory: 'Daycare', type: 'Fixed', monthly_target: 0 },
+      { category: 'Kids', subcategory: 'Kids Activities', type: 'Variable', monthly_target: 25 },
+      { category: 'Kids', subcategory: 'Diapers & Supplies', type: 'Variable', monthly_target: 20 },
+      { category: 'Kids', subcategory: 'Kids Clothing', type: 'Sinking_Fund', monthly_target: 0 },
+      { category: 'Debt', subcategory: 'Student Loans - Earnest', type: 'Fixed', monthly_target: 0 },
+      { category: 'Debt', subcategory: 'Student Loans - Nelnet', type: 'Fixed', monthly_target: 0 },
+      { category: 'Debt', subcategory: 'Auto Loan', type: 'Fixed', monthly_target: 0 },
+      { category: 'Bills', subcategory: 'Phone', type: 'Fixed', monthly_target: 0 },
+      { category: 'Bills', subcategory: 'Subscriptions - Media', type: 'Fixed', monthly_target: 0 },
+      { category: 'Bills', subcategory: 'Subscriptions - Tools', type: 'Fixed', monthly_target: 0 },
+      { category: 'Health', subcategory: 'Medical & Wellness', type: 'Sinking_Fund', monthly_target: 0 },
+      { category: 'Personal', subcategory: 'Adult Clothing', type: 'Sinking_Fund', monthly_target: 0 },
+      { category: 'Personal', subcategory: 'Haircuts', type: 'Sinking_Fund', monthly_target: 0 },
+      { category: 'Personal', subcategory: 'Casey Discretionary', type: 'Sinking_Fund', monthly_target: 0 },
+      { category: 'Personal', subcategory: 'Deena Discretionary', type: 'Sinking_Fund', monthly_target: 0 },
+      { category: 'Pets', subcategory: 'Food & Meds', type: 'Sinking_Fund', monthly_target: 0 },
+      { category: 'Pets', subcategory: 'Vet Visits', type: 'Sinking_Fund', monthly_target: 0 },
+      { category: 'Travel', subcategory: 'Vacations & Road Trips', type: 'Sinking_Fund', monthly_target: 0 },
+      { category: 'Holidays', subcategory: 'Christmas & Thanksgiving', type: 'Sinking_Fund', monthly_target: 0 },
+      { category: 'Holidays', subcategory: 'Gifts & Celebrations', type: 'Sinking_Fund', monthly_target: 0 },
+      { category: 'Giving', subcategory: 'Charity / Tithe', type: 'Fixed', monthly_target: 0 },
+      { category: 'Investing', subcategory: 'Acorns', type: 'Fixed', monthly_target: 0 },
+      { category: 'Taxes & Fees', subcategory: 'Taxes & Gov Fees', type: 'Cash_Hit', monthly_target: 0 },
+      { category: 'Misc', subcategory: 'One-Offs & Unplanned', type: 'Sinking_Fund', monthly_target: 0 },
+      { category: 'Special', subcategory: 'Reimbursements', type: 'Variable', monthly_target: 0 },
+      { category: 'Big Savings', subcategory: 'Emergency Fund', type: 'Sinking_Fund', monthly_target: 0 },
+      { category: 'Big Savings', subcategory: 'Next Car', type: 'Sinking_Fund', monthly_target: 0 },
+      { category: 'Big Savings', subcategory: 'Furnace', type: 'Sinking_Fund', monthly_target: 0 },
+      { category: 'Big Savings', subcategory: 'Phone Replacement', type: 'Sinking_Fund', monthly_target: 0 }
+    ];
+
+    const DEMO_DASHBOARD = {
+      snapshot: {
+        'Total Checking': '$3,488.15',
+        'Current Credit Card Balance': '($84.88)',
+        'Net Liquid Cash': '$3,403.27',
+        'Total Savings': '$21,980.96',
+        'Total Cash Reserve': '$25,384.23',
+        'Last Updated': '2026-11-24',
+        'Active Month Selector': '2026-12'
+      },
+      kpis: {
+        inflow: { actual: '$0.00', target: 'Target: $9,515.38' },
+        outflow: { actual: '$0.00', target: 'Target: $9,189.64' },
+        net_cash: { actual: '$0.00', target: 'Target: $325.74' },
+        outlook_12m: { value: '$7,629.88', sub: 'Avg/Mo: $635.82' },
+        ending_12m: { value: '$11,033.15', status: 'Status: ✅ HEALTHY' }
+      },
+      rollup: [
+        { category: 'Food', subcategory: 'Groceries', type: 'Variable', planned: '$1,230.00', actual: '$0.00', variance: '$1,230.00', ytd_spend: '$0.00' },
+        { category: 'Food', subcategory: 'Dining Out', type: 'Variable', planned: '$190.00', actual: '$0.00', variance: '$190.00', ytd_spend: '$0.00' },
+        { category: 'Food', subcategory: 'Coffee & Drinks', type: 'Variable', planned: '$35.00', actual: '$0.00', variance: '$35.00', ytd_spend: '$0.00' },
+        { category: 'Auto', subcategory: 'Gas', type: 'Variable', planned: '$170.00', actual: '$0.00', variance: '$170.00', ytd_spend: '$0.00' },
+        { category: 'Household', subcategory: 'Sundries', type: 'Variable', planned: '$125.00', actual: '$0.00', variance: '$125.00', ytd_spend: '$0.00' },
+        { category: 'Housing', subcategory: 'Utilities', type: 'Variable', planned: '$525.00', actual: '$0.00', variance: '$525.00', ytd_spend: '$0.00' },
+        { category: 'Housing', subcategory: 'Mortgage', type: 'Fixed', planned: '$2,074.70', actual: '$0.00', variance: '$2,074.70', ytd_spend: '$0.00' },
+        { category: 'Kids', subcategory: 'Daycare', type: 'Fixed', planned: '$1,140.00', actual: '$0.00', variance: '$1,140.00', ytd_spend: '$0.00' },
+        { category: 'Home', subcategory: 'Windows Project', type: 'Cash_Hit', planned: '$667.00', actual: '$0.00', variance: '$667.00', ytd_spend: '$0.00' },
+        { category: 'Health', subcategory: 'Medical & Wellness', type: 'Sinking_Fund', planned: '$350.00', actual: '$0.00', variance: '$350.00', ytd_spend: '$0.00' },
+        { category: 'Travel', subcategory: 'Vacations & Road Trips', type: 'Sinking_Fund', planned: '$200.00', actual: '$0.00', variance: '$200.00', ytd_spend: '$0.00' },
+        { category: 'Home', subcategory: 'Maintenance & Projects', type: 'Sinking_Fund', planned: '$200.00', actual: '$0.00', variance: '$200.00', ytd_spend: '$0.00' },
         { category: 'Holidays', subcategory: 'Christmas & Thanksgiving', type: 'Sinking_Fund', planned: '$95.00', actual: '$0.00', variance: '$95.00', ytd_spend: '$0.00' }
       ]
     };
@@ -270,7 +707,7 @@
 
     const state = {
       activeTab: 'log',
-      txnType: 'expense', // 'expense' | 'income'
+      txnType: 'expense',
       accountType: 'Credit Card',
       txnStatus: 'Cleared',
       budgetMonthManual: false,
@@ -279,24 +716,64 @@
       plannedDueMode: 'ALL',
       plannedMonths: [],
       plannedFilter: 'All',
-      mode: 'demo', // 'live' | 'demo' | 'offline'
+      mode: 'demo',
       categories: JSON.parse(JSON.stringify(FALLBACK_CATEGORIES)),
       dashboard: JSON.parse(JSON.stringify(DEMO_DASHBOARD)),
       planned: JSON.parse(JSON.stringify(DEMO_PLANNED)),
       rollupFilter: 'All'
     };
 
+    let toastTimer = null;
+
     // =========================================================================
     // 4. INITIALIZATION
     // =========================================================================
     document.addEventListener('DOMContentLoaded', () => {
       initDateDefaults();
-      populateCategoryDropdowns();
+      populateCategoryDropdowns('Food', 'Groceries');
       populatePlannedCategoryDropdowns();
       renderDashboard();
       renderPlannedList();
       renderPendingQueueUI();
-// ... existing code ...
+
+      if (hasCredentials()) {
+        fetchBootstrap(false).then((ok) => {
+          if (ok && getPendingQueue().length > 0) {
+            syncPendingQueue();
+          }
+        });
+      }
+
+      window.addEventListener('online', () => {
+        if (hasCredentials()) {
+          fetchBootstrap(false);
+          if (getPendingQueue().length > 0) syncPendingQueue();
+        }
+      });
+
+      window.addEventListener('offline', () => {
+        if (hasCredentials()) setConnectionMode('offline');
+      });
+    });
+
+    function getTodayISO() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function initDateDefaults() {
+      const today = getTodayISO();
+      document.getElementById('logDateInput').value = today;
+      document.getElementById('logBudgetMonthInput').value = today.slice(0, 7);
+      document.getElementById('snapLastUpdatedInput').value = today;
+    }
+
+    // =========================================================================
+    // 5. NAVIGATION & SETTINGS
+    // =========================================================================
     function switchTab(tab) {
       state.activeTab = tab;
       ['log', 'planned', 'budget', 'snapshot'].forEach((t) => {
@@ -311,7 +788,70 @@
         }
       });
     }
-// ... existing code ...
+
+    function getCredentials() {
+      return {
+        url: (localStorage.getItem(STORAGE_URL_KEY) || '').trim(),
+        token: (localStorage.getItem(STORAGE_TOKEN_KEY) || '').trim()
+      };
+    }
+
+    function hasCredentials() {
+      const { url, token } = getCredentials();
+      return Boolean(url && token);
+    }
+
+    function setConnectionMode(mode) {
+      state.mode = mode;
+      const pill = document.getElementById('statusPill');
+      const dot = document.getElementById('statusDot');
+      const text = document.getElementById('statusText');
+
+      if (mode === 'live') {
+        pill.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition';
+        dot.className = 'w-2 h-2 rounded-full bg-emerald-500';
+        text.textContent = 'Live';
+      } else if (mode === 'offline') {
+        pill.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold flex items-center gap-1.5 bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition';
+        dot.className = 'w-2 h-2 rounded-full bg-rose-500';
+        text.textContent = 'Offline';
+      } else {
+        pill.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold flex items-center gap-1.5 bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition';
+        dot.className = 'w-2 h-2 rounded-full bg-amber-500';
+        text.textContent = 'Demo';
+      }
+    }
+
+    function openSettingsModal() {
+      const { url, token } = getCredentials();
+      document.getElementById('cfgUrl').value = url;
+      document.getElementById('cfgToken').value = token;
+      document.getElementById('settingsModal').classList.remove('hidden');
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('settingsModal').classList.add('hidden');
+    }
+
+    async function handleSettingsSave(e) {
+      e.preventDefault();
+      const url = document.getElementById('cfgUrl').value.trim();
+      const token = document.getElementById('cfgToken').value.trim();
+
+      if (!url || !token) {
+        showToast('Please enter both your Web App URL and API Token.', 'error');
+        return;
+      }
+
+      localStorage.setItem(STORAGE_URL_KEY, url);
+      localStorage.setItem(STORAGE_TOKEN_KEY, token);
+      closeSettingsModal();
+      const ok = await fetchBootstrap(true);
+      if (ok && getPendingQueue().length > 0) {
+        syncPendingQueue();
+      }
+    }
+
     function enableDemoMode() {
       localStorage.removeItem(STORAGE_URL_KEY);
       localStorage.removeItem(STORAGE_TOKEN_KEY);
@@ -322,7 +862,7 @@
       state.dashboard = JSON.parse(JSON.stringify(DEMO_DASHBOARD));
       state.planned = JSON.parse(JSON.stringify(DEMO_PLANNED));
       setConnectionMode('demo');
-      populateCategoryDropdowns();
+      populateCategoryDropdowns('Food', 'Groceries');
       populatePlannedCategoryDropdowns();
       renderDashboard();
       renderPlannedList();
@@ -330,6 +870,9 @@
       showToast('Switched to Demo Mode with preloaded data.', 'info');
     }
 
+    // =========================================================================
+    // 6. API BOOTSTRAP (GET)
+    // =========================================================================
     async function fetchBootstrap(showSuccessToast = true) {
       const { url, token } = getCredentials();
       if (!url || !token) {
@@ -368,7 +911,161 @@
         if (showSuccessToast) showToast('Connected & synced with Google Sheet!', 'success');
         return true;
       } catch (err) {
-// ... existing code ...
+        setConnectionMode(navigator.onLine ? 'demo' : 'offline');
+        if (showSuccessToast) {
+          showToast(`Sync failed: ${err.message}`, 'error');
+        }
+        return false;
+      } finally {
+        if (refreshIcon) refreshIcon.classList.remove('animate-spin');
+      }
+    }
+
+    // =========================================================================
+    // 7A. TAB 1: LOG TRANSACTION LOGIC
+    // =========================================================================
+    function setLogType(type) {
+      state.txnType = type;
+      const btnExp = document.getElementById('btnLogExpense');
+      const btnInc = document.getElementById('btnLogIncome');
+      const prefix = document.getElementById('logSignPrefix');
+
+      if (type === 'expense') {
+        btnExp.className = 'py-2 rounded-lg text-sm font-semibold transition bg-white text-[#ef4444] shadow-sm';
+        btnInc.className = 'py-2 rounded-lg text-sm font-semibold transition text-slate-600 hover:text-slate-900';
+        prefix.textContent = '-$';
+        prefix.className = 'text-2xl font-extrabold text-[#ef4444]';
+      } else {
+        btnInc.className = 'py-2 rounded-lg text-sm font-semibold transition bg-white text-[#10b981] shadow-sm';
+        btnExp.className = 'py-2 rounded-lg text-sm font-semibold transition text-slate-600 hover:text-slate-900';
+        prefix.textContent = '+$';
+        prefix.className = 'text-2xl font-extrabold text-[#10b981]';
+      }
+      populateCategoryDropdowns();
+    }
+
+    function populateCategoryDropdowns(preferredCat = null, preferredSub = null) {
+      const catSelect = document.getElementById('logCategorySelect');
+      const prevCat = preferredCat || catSelect.value;
+      const filtered = state.categories.filter((c) => {
+        if (state.txnType === 'income') {
+          return c.type === 'Income' || c.category === 'Special';
+        }
+        return c.type !== 'Income';
+      });
+
+      const uniqueCats = [...new Set(filtered.map((c) => c.category))];
+      catSelect.innerHTML = '';
+      uniqueCats.forEach((cat) => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        catSelect.appendChild(opt);
+      });
+
+      if (prevCat && uniqueCats.includes(prevCat)) {
+        catSelect.value = prevCat;
+      }
+      handleCategoryChange(preferredSub);
+    }
+
+    function handleCategoryChange(preferredSub = null) {
+      const cat = document.getElementById('logCategorySelect').value;
+      const subSelect = document.getElementById('logSubcategorySelect');
+      const prevSub = preferredSub || subSelect.value;
+      const subs = state.categories.filter((c) => c.category === cat);
+
+      subSelect.innerHTML = '';
+      subs.forEach((item) => {
+        const opt = document.createElement('option');
+        opt.value = item.subcategory;
+        opt.textContent = item.subcategory;
+        subSelect.appendChild(opt);
+      });
+
+      if (prevSub && subs.some((s) => s.subcategory === prevSub)) {
+        subSelect.value = prevSub;
+      }
+    }
+
+    function applyMerchantChip(merchant, cat, subcat) {
+      if (state.txnType !== 'expense') setLogType('expense');
+      document.getElementById('logMerchantInput').value = merchant;
+      populateCategoryDropdowns(cat, subcat);
+      document.getElementById('logAmountInput').focus();
+    }
+
+    function toggleBudgetMonthRow() {
+      document.getElementById('budgetMonthRow').classList.toggle('hidden');
+    }
+
+    function handleDateChange() {
+      const d = document.getElementById('logDateInput').value;
+      if (d && !state.budgetMonthManual) {
+        document.getElementById('logBudgetMonthInput').value = d.slice(0, 7);
+      }
+    }
+
+    function setAccountType(acct) {
+      state.accountType = acct;
+      document.querySelectorAll('.acct-pill').forEach((btn) => {
+        const active = btn.dataset.acct === acct;
+        btn.className = active
+          ? 'acct-pill py-2 rounded-xl text-xs font-semibold border transition bg-[#266489] text-white border-[#266489] shadow-sm'
+          : 'acct-pill py-2 rounded-xl text-xs font-semibold border transition bg-white text-slate-600 border-slate-200 hover:bg-slate-50';
+      });
+    }
+
+    function setTxnStatus(status) {
+      state.txnStatus = status;
+      const clr = document.getElementById('btnStatusCleared');
+      const pnd = document.getElementById('btnStatusPending');
+      if (status === 'Cleared') {
+        clr.className = 'py-1.5 rounded-lg text-[11px] font-semibold bg-white text-[#266489] shadow-sm transition';
+        pnd.className = 'py-1.5 rounded-lg text-[11px] font-semibold text-slate-600 transition';
+      } else {
+        pnd.className = 'py-1.5 rounded-lg text-[11px] font-semibold bg-white text-amber-600 shadow-sm transition';
+        clr.className = 'py-1.5 rounded-lg text-[11px] font-semibold text-slate-600 transition';
+      }
+    }
+
+    async function handleLogSubmit(e) {
+      e.preventDefault();
+      const rawAmt = parseRawNumber(document.getElementById('logAmountInput').value);
+      if (isNaN(rawAmt) || rawAmt <= 0) {
+        showToast('Please enter a valid amount greater than 0.', 'error');
+        return;
+      }
+
+      const dateVal = document.getElementById('logDateInput').value || getTodayISO();
+      const bmVal = document.getElementById('logBudgetMonthInput').value || dateVal.slice(0, 7);
+      const signedAmount = state.txnType === 'expense' ? -Math.abs(rawAmt) : Math.abs(rawAmt);
+
+      const transaction = {
+        date: dateVal,
+        budget_month: bmVal,
+        amount: Number(signedAmount.toFixed(2)),
+        category: document.getElementById('logCategorySelect').value,
+        subcategory: document.getElementById('logSubcategorySelect').value,
+        merchant: document.getElementById('logMerchantInput').value.trim(),
+        account_type: state.accountType,
+        status: state.txnStatus,
+        notes: document.getElementById('logNotesInput').value.trim()
+      };
+
+      const btn = document.getElementById('logSubmitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Saving...';
+
+      // Demo Mode local simulation
+      if (!hasCredentials()) {
+        resetLogForm();
+        btn.disabled = false;
+        btn.textContent = 'Save Transaction';
+        showToast(`Logged ${transaction.merchant} (${formatMoney(transaction.amount)}) (Demo)`, 'success');
+        return;
+      }
+
       // Offline check
       if (!navigator.onLine) {
         queueOfflineItem('transaction', transaction);
@@ -401,7 +1098,6 @@
         showToast(`Saved ${data.transaction.transaction_id} (${formatMoney(transaction.amount)})`, 'success');
         fetchBootstrap(false);
       } catch (err) {
-        // Queue on network/fetch failure; show error if server explicitly rejected
         if (err.message && !err.message.toLowerCase().includes('failed to fetch') && !err.message.toLowerCase().includes('network')) {
           showToast(`Error: ${err.message}`, 'error');
         } else {
@@ -414,7 +1110,27 @@
         btn.textContent = 'Save Transaction';
       }
     }
-// ... existing code ...
+
+    function resetLogForm() {
+      document.getElementById('logAmountInput').value = '';
+      document.getElementById('logMerchantInput').value = '';
+      document.getElementById('logNotesInput').value = '';
+      state.budgetMonthManual = false;
+      const d = document.getElementById('logDateInput').value || getTodayISO();
+      document.getElementById('logBudgetMonthInput').value = d.slice(0, 7);
+    }
+
+    // =========================================================================
+    // 7B. OFFLINE QUEUE (UNIFIED FOR TRANSACTIONS & PLANNED ITEMS)
+    // =========================================================================
+    function getPendingQueue() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_QUEUE_KEY) || '[]');
+      } catch {
+        return [];
+      }
+    }
+
     function savePendingQueue(queue) {
       localStorage.setItem(STORAGE_QUEUE_KEY, JSON.stringify(queue));
       renderPendingQueueUI();
@@ -427,7 +1143,22 @@
     }
 
     function renderPendingQueueUI() {
-// ... existing code ...
+      const queue = getPendingQueue();
+      const banner = document.getElementById('pendingQueueBanner');
+      const text = document.getElementById('pendingQueueText');
+
+      if (queue.length > 0) {
+        banner.classList.remove('hidden');
+        text.textContent = `${queue.length} queued item${queue.length === 1 ? '' : 's'} waiting to sync`;
+      } else {
+        banner.classList.add('hidden');
+      }
+    }
+
+    async function syncPendingQueue() {
+      const queue = getPendingQueue();
+      if (queue.length === 0 || !hasCredentials() || !navigator.onLine) return;
+
       const { url, token } = getCredentials();
       const remaining = [];
       let syncedCount = 0;
@@ -473,7 +1204,7 @@
     }
 
     // =========================================================================
-    // 7B. TAB 2: PLANNED / RECURRING LOGIC & LIST
+    // 8. TAB 2: PLANNED / RECURRING LOGIC & LIST
     // =========================================================================
     function setPlannedType(type) {
       state.plannedType = type;
@@ -497,6 +1228,7 @@
 
     function populatePlannedCategoryDropdowns(preferredCat = null, preferredSub = null) {
       const catSelect = document.getElementById('plannedCategorySelect');
+      const prevCat = preferredCat || catSelect.value;
       const filtered = state.categories.filter((c) => {
         if (state.plannedType === 'income') {
           return c.type === 'Income' || c.category === 'Special';
@@ -513,8 +1245,8 @@
         catSelect.appendChild(opt);
       });
 
-      if (preferredCat && uniqueCats.includes(preferredCat)) {
-        catSelect.value = preferredCat;
+      if (prevCat && uniqueCats.includes(prevCat)) {
+        catSelect.value = prevCat;
       }
       handlePlannedCategoryChange(preferredSub);
     }
@@ -522,6 +1254,7 @@
     function handlePlannedCategoryChange(preferredSub = null) {
       const cat = document.getElementById('plannedCategorySelect').value;
       const subSelect = document.getElementById('plannedSubcategorySelect');
+      const prevSub = preferredSub || subSelect.value;
       const subs = state.categories.filter((c) => c.category === cat);
 
       subSelect.innerHTML = '';
@@ -532,8 +1265,8 @@
         subSelect.appendChild(opt);
       });
 
-      if (preferredSub && subs.some((s) => s.subcategory === preferredSub)) {
-        subSelect.value = preferredSub;
+      if (prevSub && subs.some((s) => s.subcategory === prevSub)) {
+        subSelect.value = prevSub;
       }
     }
 
@@ -755,7 +1488,35 @@
           </div>`;
       }).join('');
     }
-// ... existing code ...
+
+    // =========================================================================
+    // 9. TAB 3: BUDGET DASHBOARD & ROLLUP
+    // =========================================================================
+    function renderDashboard() {
+      const dash = state.dashboard || DEMO_DASHBOARD;
+      const snap = dash.snapshot || {};
+      const kpis = dash.kpis || {};
+
+      const activeMonth = snap['Active Month Selector'] || '2026-12';
+      document.getElementById('headerSubtitle').textContent = `Active Month: ${activeMonth}`;
+      document.getElementById('dashActiveMonthBadge').textContent = activeMonth;
+      document.getElementById('dashNetLiquid').textContent = snap['Net Liquid Cash'] || '$0.00';
+      document.getElementById('dashTotalReserve').textContent = snap['Total Cash Reserve'] || '$0.00';
+      document.getElementById('dashEndingCash').textContent = (kpis.ending_12m && kpis.ending_12m.value) || '$0.00';
+      document.getElementById('dashHealthStatus').textContent = (kpis.ending_12m && kpis.ending_12m.status) || '';
+
+      document.getElementById('kpiInflowVal').textContent = (kpis.inflow && kpis.inflow.actual) || '$0.00';
+      document.getElementById('kpiInflowSub').textContent = (kpis.inflow && kpis.inflow.target) || '';
+
+      document.getElementById('kpiOutflowVal').textContent = (kpis.outflow && kpis.outflow.actual) || '$0.00';
+      document.getElementById('kpiOutflowSub').textContent = (kpis.outflow && kpis.outflow.target) || '';
+
+      document.getElementById('kpiNetVal').textContent = (kpis.net_cash && kpis.net_cash.actual) || '$0.00';
+      document.getElementById('kpiNetSub').textContent = (kpis.net_cash && kpis.net_cash.target) || '';
+
+      document.getElementById('kpiOutlookVal').textContent = (kpis.outlook_12m && kpis.outlook_12m.value) || '$0.00';
+      document.getElementById('kpiOutlookSub').textContent = (kpis.outlook_12m && kpis.outlook_12m.sub) || '';
+
       // Sync Snapshot Tab inputs
       const lastUpd = snap['Last Updated'] || getTodayISO();
       const snapLastEl = document.getElementById('snapLastUpdatedInput');
@@ -764,7 +1525,87 @@
       document.getElementById('snapCreditCard').value = parseCurrency(snap['Current Credit Card Balance']).toFixed(2);
       document.getElementById('snapSavings').value = parseCurrency(snap['Total Savings']).toFixed(2);
       updateSnapshotPreview();
-// ... existing code ...
+
+      renderRollupList();
+    }
+
+    function setRollupFilter(filter) {
+      state.rollupFilter = filter;
+      document.querySelectorAll('.rfilter-pill').forEach((btn) => {
+        const active = btn.dataset.rfilter === filter;
+        btn.className = active
+          ? 'rfilter-pill px-3 py-1.5 rounded-full text-xs font-semibold bg-[#266489] text-white shrink-0 transition'
+          : 'rfilter-pill px-3 py-1.5 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-600 shrink-0 transition';
+      });
+      renderRollupList();
+    }
+
+    function renderRollupList() {
+      const container = document.getElementById('rollupList');
+      const query = (document.getElementById('rollupSearch').value || '').trim().toLowerCase();
+      const rows = ((state.dashboard && state.dashboard.rollup) || []).filter((r) => {
+        const matchesType = state.rollupFilter === 'All' || r.type === state.rollupFilter;
+        const matchesSearch = !query ||
+          String(r.category || '').toLowerCase().includes(query) ||
+          String(r.subcategory || '').toLowerCase().includes(query);
+        return matchesType && matchesSearch;
+      });
+
+      if (rows.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white rounded-2xl border border-slate-200 p-6 text-center text-xs text-slate-500">
+            No matching categories found.
+          </div>`;
+        return;
+      }
+
+      container.innerHTML = rows.map((r) => {
+        const planned = parseCurrency(r.planned);
+        const actual = parseCurrency(r.actual);
+        const variance = parseCurrency(r.variance);
+        const pct = planned > 0 ? Math.min(100, Math.max(0, (actual / planned) * 100)) : (actual > 0 ? 100 : 0);
+        const isOver = variance < 0;
+        const barColor = isOver ? 'bg-[#ef4444]' : (pct >= 80 ? 'bg-amber-500' : 'bg-[#10b981]');
+        const varColor = isOver ? 'text-[#ef4444]' : 'text-[#10b981]';
+
+        return `
+          <div class="bg-white rounded-2xl border border-slate-200/80 p-3.5 shadow-sm space-y-2">
+            <div class="flex items-start justify-between gap-2">
+              <div class="min-w-0">
+                <p class="text-sm font-bold text-[#0f172a] truncate">${escapeHtml(r.subcategory)}</p>
+                <p class="text-[11px] text-slate-500 truncate">${escapeHtml(r.category)} &bull; ${escapeHtml(r.type)}</p>
+              </div>
+              <div class="text-right shrink-0">
+                <p class="text-sm font-extrabold tabular-nums ${varColor}">${escapeHtml(r.variance || '$0.00')}</p>
+                <p class="text-[10px] text-slate-400 font-medium">remaining</p>
+              </div>
+            </div>
+            <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+              <div class="h-full ${barColor} rounded-full transition-all" style="width: ${pct.toFixed(0)}%"></div>
+            </div>
+            <div class="flex items-center justify-between text-[11px] text-slate-500 tabular-nums">
+              <span>Spent: <strong class="text-slate-700">${escapeHtml(r.actual || '$0.00')}</strong></span>
+              <span>Planned: <strong class="text-slate-700">${escapeHtml(r.planned || '$0.00')}</strong></span>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    // =========================================================================
+    // 10. TAB 4: SNAPSHOT UPDATE LOGIC
+    // =========================================================================
+    function updateSnapshotPreview() {
+      const checking = parseRawNumber(document.getElementById('snapChecking').value) || 0;
+      const cc = parseRawNumber(document.getElementById('snapCreditCard').value) || 0;
+      const savings = parseRawNumber(document.getElementById('snapSavings').value) || 0;
+
+      const netLiquid = checking - Math.abs(cc);
+      const totalReserve = netLiquid + savings;
+
+      document.getElementById('previewNetLiquid').textContent = formatMoney(netLiquid);
+      document.getElementById('previewTotalReserve').textContent = formatMoney(totalReserve);
+    }
+
     async function handleSnapshotSubmit(e) {
       e.preventDefault();
       const checking = parseRawNumber(document.getElementById('snapChecking').value);
@@ -776,13 +1617,27 @@
         showToast('Please enter valid numbers for all 3 balances.', 'error');
         return;
       }
-// ... existing code ...
+
+      const btn = document.getElementById('snapSubmitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Updating...';
+
+      if (!hasCredentials()) {
+        const netLiquid = checking - Math.abs(credit_card);
+        const totalReserve = netLiquid + savings;
+        state.dashboard.snapshot['Total Checking'] = formatMoney(checking);
+        state.dashboard.snapshot['Current Credit Card Balance'] = formatMoney(credit_card);
         state.dashboard.snapshot['Total Savings'] = formatMoney(savings);
         state.dashboard.snapshot['Net Liquid Cash'] = formatMoney(netLiquid);
         state.dashboard.snapshot['Total Cash Reserve'] = formatMoney(totalReserve);
         state.dashboard.snapshot['Last Updated'] = last_updated;
         renderDashboard();
-// ... existing code ...
+        btn.disabled = false;
+        btn.textContent = 'Save Snapshot to Sheet';
+        showToast('Snapshot updated (Demo Mode).', 'success');
+        return;
+      }
+
       try {
         const { url, token } = getCredentials();
         const res = await fetch(url, {
@@ -795,4 +1650,78 @@
           })
         });
         const data = await res.json();
-// ... existing code ...
+
+        if (!data || data.ok === false) {
+          throw new Error((data && data.error) || 'Failed to update snapshot');
+        }
+
+        showToast('Snapshot saved to Forecast_Dashboard!', 'success');
+        fetchBootstrap(false);
+      } catch (err) {
+        showToast(`Snapshot error: ${err.message}`, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Save Snapshot to Sheet';
+      }
+    }
+
+    // =========================================================================
+    // 11. UTILITIES & TOAST
+    // =========================================================================
+    function parseRawNumber(val) {
+      if (val === undefined || val === null) return NaN;
+      const cleaned = String(val).replace(/[$,\s]/g, '');
+      if (!cleaned) return NaN;
+      return Number(cleaned);
+    }
+
+    function parseCurrency(val) {
+      if (typeof val === 'number') return val;
+      if (!val || val === '-') return 0;
+      const str = String(val).trim();
+      const isNeg = str.startsWith('(') && str.endsWith(')');
+      const num = parseFloat(str.replace(/[^0-9.-]/g, ''));
+      if (isNaN(num)) return 0;
+      return isNeg ? -Math.abs(num) : num;
+    }
+
+    function formatMoney(num) {
+      const n = Number(num) || 0;
+      const abs = Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      return n < 0 ? `-$${abs}` : `$${abs}`;
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function showToast(message, type = 'info') {
+      const toast = document.getElementById('toast');
+      const inner = document.getElementById('toastInner');
+
+      const colors = {
+        success: 'bg-[#10b981]',
+        error: 'bg-[#ef4444]',
+        warning: 'bg-amber-600',
+        info: 'bg-[#0f172a]'
+      };
+      inner.className = `px-4 py-3 rounded-2xl shadow-lg text-xs font-bold text-white flex items-center justify-center text-center ${colors[type] || colors.info}`;
+      inner.textContent = message;
+
+      toast.classList.remove('opacity-0', '-translate-y-2');
+      toast.classList.add('opacity-100', 'translate-y-0');
+
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.add('opacity-0', '-translate-y-2');
+        toast.classList.remove('opacity-100', 'translate-y-0');
+      }, 3200);
+    }
+  </script>
+</body>
+</html>
