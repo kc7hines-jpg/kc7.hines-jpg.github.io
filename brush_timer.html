@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Rocket Teeth-Brushing Timer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&display=swap');
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      min-height: 100dvh;
+      overflow-y: auto;
+      overflow-x: hidden;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(180deg, #070b1e 0%, #0d1536 55%, #131c46 100%);
+      color: #f8fafc;
+    }
+
+    /* Subtle Animated Starfield */
+    .starfield {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background-image:
+        radial-gradient(1.5px 1.5px at 24px 36px, rgba(255, 255, 255, 0.85), transparent),
+        radial-gradient(2px 2px at 130px 90px, rgba(186, 230, 253, 0.8), transparent),
+        radial-gradient(1.2px 1.2px at 240px 160px, rgba(255, 255, 255, 0.7), transparent),
+        radial-gradient(2px 2px at 75px 230px, rgba(253, 230, 138, 0.75), transparent),
+        radial-gradient(1.5px 1.5px at 310px 55px, rgba(224, 242, 254, 0.8), transparent),
+        radial-gradient(1.6px 1.6px at 190px 280px, rgba(244, 114, 182, 0.7), transparent);
+      background-size: 340px 300px;
+      animation: twinkle 6s ease-in-out infinite alternate;
+    }
+
+    @keyframes twinkle {
+      0% { opacity: 0.45; }
+      100% { opacity: 0.9; }
+    }
+
+    /* Horizontal Rocket Marker & Animations */
+    .rocket-marker {
+      position: absolute;
+      top: 50%;
+      left: 0%;
+      transform: translate(-50%, -50%);
+      transition: left 0.35s linear;
+      display: flex;
+      align-items: center;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .rocket-emoji {
+      display: inline-block;
+      font-size: 1.75rem;
+      line-height: 1;
+      transform: rotate(45deg);
+      filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.65));
+    }
+
+    .thruster-flame {
+      display: inline-block;
+      font-size: 1rem;
+      line-height: 1;
+      margin-right: -4px;
+      transform: rotate(-90deg);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .rocket-marker.thrusting .thruster-flame {
+      opacity: 1;
+      animation: flamePulse 0.14s infinite alternate;
+    }
+
+    .rocket-marker.hovering {
+      animation: gentleBob 0.75s ease-in-out infinite alternate;
+    }
+
+    @keyframes flamePulse {
+      0% { transform: rotate(-90deg) scale(0.85); }
+      100% { transform: rotate(-90deg) scale(1.22); }
+    }
+
+    @keyframes gentleBob {
+      0% { transform: translate(-50%, -50%) translateY(0px); }
+      100% { transform: translate(-50%, -50%) translateY(-4px); }
+    }
+
+    /* Pulsing Confirmation Button */
+    @keyframes confirmPulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.45); }
+      50% { transform: scale(1.015); box-shadow: 0 0 0 8px rgba(251, 191, 36, 0); }
+    }
+
+    @keyframes confirmPulsePink {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(244, 114, 182, 0.5); }
+      50% { transform: scale(1.015); box-shadow: 0 0 0 8px rgba(244, 114, 182, 0); }
+    }
+
+    .pulse-amber {
+      animation: confirmPulse 1.5s infinite;
+    }
+
+    .pulse-pink {
+      animation: confirmPulsePink 1.5s infinite;
+    }
+
+    /* Dental Arch SVG Segment States */
+    .arch-seg {
+      fill: #1e293b;
+      stroke: #334155;
+      stroke-width: 2;
+      transition: fill 0.25s ease, stroke 0.25s ease, filter 0.25s ease;
+    }
+
+    .arch-seg-active {
+      fill: #1d4ed8;
+      stroke: #38bdf8;
+      stroke-width: 3;
+      filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.8));
+    }
+
+    .arch-seg-done {
+      fill: rgba(16, 185, 129, 0.26);
+      stroke: #34d399;
+      stroke-width: 2;
+    }
+  </style>
+</head>
+<body class="flex flex-col items-center justify-start px-3 py-3 sm:py-5">
+  <div class="starfield"></div>
+
+  <!-- Main Mobile-First Container -->
+  <main class="relative z-10 w-full max-w-md flex flex-col gap-2.5 pb-4">
+
+    <!-- 1. Compact Header -->
+    <header class="flex items-center justify-between gap-2 px-1">
+      <h1 class="text-lg sm:text-xl font-black tracking-tight text-white flex items-center gap-1.5">
+        <span>🚀</span>
+        <span>Rocket Brush</span>
+      </h1>
+
+      <div class="flex items-center gap-1.5">
+        <button
+          id="soundToggle"
+          type="button"
+          class="px-3 py-1.5 rounded-full bg-slate-800/90 hover:bg-slate-700 active:scale-95 border border-indigo-300/25 text-xs font-bold text-slate-100 transition cursor-pointer"
+          aria-label="Toggle Sound"
+        >
+          🔊 Sound
+        </button>
+        <button
+          id="testSoundBtn"
+          type="button"
+          class="px-3 py-1.5 rounded-full bg-pink-500/20 hover:bg-pink-500/30 active:scale-95 border border-pink-400/40 text-xs font-bold text-pink-200 transition cursor-pointer"
+          aria-label="Test Chimes"
+        >
+          🎵 Test
+        </button>
+      </div>
+    </header>
+
+    <!-- 2. Compact Status Banner -->
+    <section
+      id="statusBanner"
+      class="rounded-2xl px-3.5 py-2.5 text-center border transition-all duration-200 bg-sky-500/15 border-sky-400/45 shadow-md"
+    >
+      <div id="phaseTitle" class="text-base sm:text-lg font-black tracking-tight text-white leading-snug">
+        Ready for Liftoff!
+      </div>
+      <div id="phaseSub" class="text-xs sm:text-sm font-medium text-slate-200 mt-0.5">
+        Switch every 15s • Spit in sink every 30s
+      </div>
+    </section>
+
+    <!-- 3. Horizontal Rocket Flight Track + Clock Card -->
+    <section class="bg-slate-900/85 backdrop-blur-md border border-indigo-400/25 rounded-2xl p-3.5 shadow-lg">
+      <!-- Top Row: Big Clock + Step Badge -->
+      <div class="flex items-center justify-between gap-2 mb-3">
+        <div id="bigClock" class="text-4xl sm:text-5xl font-black tabular-nums tracking-tight text-sky-400 leading-none">
+          02:00
+        </div>
+        <div
+          id="stepBadge"
+          class="px-2.5 py-1.5 rounded-xl bg-slate-800/90 border border-slate-700 text-xs font-bold text-slate-200 text-right tabular-nums"
+        >
+          Step 1 of 8 • 15s left
+        </div>
+      </div>
+
+      <!-- Horizontal Rocket Flight Track -->
+      <div class="px-3 pt-3 pb-1">
+        <!-- Rail + Progress Bar + Animated Rocket -->
+        <div class="relative h-3.5 rounded-full bg-slate-950/90 border border-indigo-400/25">
+          <!-- Glowing Progress Fill -->
+          <div
+            id="progressBar"
+            class="h-full rounded-full bg-gradient-to-r from-sky-500 via-blue-400 to-emerald-400 transition-all duration-300 shadow-[0_0_12px_rgba(56,189,248,0.65)]"
+            style="width: 0%;"
+          ></div>
+
+          <!-- Milestone Tick Dots Along Rail -->
+          <div class="absolute inset-0 pointer-events-none">
+            <span class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-amber-300/80" style="left: 12.5%;"></span>
+            <span class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-pink-400" style="left: 25%;"></span>
+            <span class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-amber-300/80" style="left: 37.5%;"></span>
+            <span class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-pink-400" style="left: 50%;"></span>
+            <span class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-amber-300/80" style="left: 62.5%;"></span>
+            <span class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-pink-400" style="left: 75%;"></span>
+            <span class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-amber-300/80" style="left: 87.5%;"></span>
+          </div>
+
+          <!-- Animated Rocket -->
+          <div id="rocketMarker" class="rocket-marker" style="left: 0%;">
+            <span class="thruster-flame">🔥</span>
+            <span class="rocket-emoji">🚀</span>
+          </div>
+        </div>
+
+        <!-- Milestone Labels Row -->
+        <div class="relative h-7 mt-2 text-[10px] font-bold leading-tight select-none">
+          <span class="absolute -translate-x-1/2 text-slate-400" style="left: 0%;">0:00</span>
+          <span class="absolute -translate-x-1/2 text-amber-300/85" style="left: 12.5%;">:15</span>
+          <span class="absolute -translate-x-1/2 text-pink-400 text-center" style="left: 25%;">:30<br />💧</span>
+          <span class="absolute -translate-x-1/2 text-amber-300/85" style="left: 37.5%;">:45</span>
+          <span class="absolute -translate-x-1/2 text-pink-400 text-center" style="left: 50%;">1:00<br />💧</span>
+          <span class="absolute -translate-x-1/2 text-amber-300/85" style="left: 62.5%;">1:15</span>
+          <span class="absolute -translate-x-1/2 text-pink-400 text-center" style="left: 75%;">1:30<br />💧</span>
+          <span class="absolute -translate-x-1/2 text-amber-300/85" style="left: 87.5%;">1:45</span>
+          <span class="absolute -translate-x-1/2 text-emerald-400 text-center" style="left: 100%;">2:00<br />🌟</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Target Zone Dental Arch Card -->
+    <section class="bg-slate-900/85 backdrop-blur-md border border-indigo-400/25 rounded-2xl p-3.5 shadow-lg">
+      <!-- Header Row -->
+      <div class="flex items-baseline justify-between gap-2 mb-1.5">
+        <span class="text-xs sm:text-sm font-semibold text-slate-400 shrink-0">Target Zone</span>
+        <span id="targetZoneName" class="text-sm sm:text-base font-extrabold text-white text-right leading-tight">
+          Upper Right Outside
+        </span>
+      </div>
+
+      <!-- Responsive 8-Segment Dental Arch SVG (Mirror View) -->
+      <svg
+        class="select-none"
+        style="width: 100%; max-width: 310px; height: auto; display: block; margin: 0 auto;"
+        viewBox="0 0 320 175"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        role="img"
+        aria-label="Dental Arch Target Zone Diagram"
+      >
+        <!-- Arch Orientation Labels -->
+        <text x="160" y="14" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="700" letter-spacing="0.06em">UPPER ARCH</text>
+        <text x="160" y="170" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="700" letter-spacing="0.06em">LOWER ARCH</text>
+        <text x="48" y="92" text-anchor="end" fill="#94a3b8" font-size="11" font-weight="700" letter-spacing="0.05em">RIGHT</text>
+        <text x="272" y="92" text-anchor="start" fill="#94a3b8" font-size="11" font-weight="700" letter-spacing="0.05em">LEFT</text>
+
+        <!-- Dashed Crosshair Dividers -->
+        <line x1="160" y1="20" x2="160" y2="156" stroke="#475569" stroke-width="1.5" stroke-dasharray="4 4" />
+        <line x1="54" y1="88" x2="266" y2="88" stroke="#475569" stroke-width="1.5" stroke-dasharray="4 4" />
+
+        <!-- Step 0: Upper Right Outside (Outer Top-Left) -->
+        <path
+          id="seg0"
+          class="arch-seg"
+          d="M 64 82 C 64 42, 108 24, 154 24 L 154 40 C 118 40, 82 54, 82 82 Z"
+        />
+        <!-- Step 1: Upper Left Outside (Outer Top-Right) -->
+        <path
+          id="seg1"
+          class="arch-seg"
+          d="M 166 24 C 212 24, 256 42, 256 82 L 238 82 C 238 54, 202 40, 166 40 Z"
+        />
+        <!-- Step 2: Lower Left Outside (Outer Bottom-Right) -->
+        <path
+          id="seg2"
+          class="arch-seg"
+          d="M 166 152 C 212 152, 256 134, 256 94 L 238 94 C 238 122, 202 136, 166 136 Z"
+        />
+        <!-- Step 3: Lower Right Outside (Outer Bottom-Left) -->
+        <path
+          id="seg3"
+          class="arch-seg"
+          d="M 64 94 C 64 134, 108 152, 154 152 L 154 136 C 118 136, 82 122, 82 94 Z"
+        />
+
+        <!-- Step 4: Upper Right Inside (Inner Top-Left) -->
+        <path
+          id="seg4"
+          class="arch-seg"
+          d="M 90 82 C 90 58, 122 46, 154 46 L 154 60 C 130 60, 107 68, 107 82 Z"
+        />
+        <!-- Step 5: Upper Left Inside (Inner Top-Right) -->
+        <path
+          id="seg5"
+          class="arch-seg"
+          d="M 166 46 C 198 46, 230 58, 230 82 L 213 82 C 213 68, 190 60, 166 60 Z"
+        />
+        <!-- Step 6: Lower Left Inside (Inner Bottom-Right) -->
+        <path
+          id="seg6"
+          class="arch-seg"
+          d="M 166 130 C 198 130, 230 118, 230 94 L 213 94 C 213 108, 190 116, 166 116 Z"
+        />
+        <!-- Step 7: Lower Right Inside (Inner Bottom-Left) -->
+        <path
+          id="seg7"
+          class="arch-seg"
+          d="M 90 94 C 90 118, 122 130, 154 130 L 154 116 C 130 116, 107 108, 107 94 Z"
+        />
+      </svg>
+    </section>
+
+    <!-- 5. Bottom Action Controls (Always Visible, Thumb-Friendly) -->
+    <section class="flex flex-col gap-2">
+      <button
+        id="primaryBtn"
+        type="button"
+        class="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-sky-400 to-blue-600 hover:from-sky-300 hover:to-blue-500 active:scale-98 text-white font-black text-base sm:text-lg shadow-lg shadow-sky-500/30 transition cursor-pointer"
+      >
+        🚀 Start Brushing
+      </button>
+
+      <button
+        id="resetBtn"
+        type="button"
+        class="w-full py-2.5 px-4 rounded-xl bg-slate-800/85 hover:bg-slate-700 active:scale-98 border border-slate-600/50 text-slate-300 font-bold text-sm transition cursor-pointer"
+      >
+        ↺ Reset
+      </button>
+    </section>
+
+  </main>
+
+  <script>
+    /**
+     * 8 Brushing Intervals x 15 Seconds = 120 Seconds (2 Minutes)
+     * Manual Tap-to-Confirm pauses at every 15s (Switch Sides) and 30s (Spit in Sink).
+     */
+    const INTERVALS = [
+      { seg: 0, zone: "Upper Right Outside", pauseAfter: "switch" }, // 0 -> 15s
+      { seg: 1, zone: "Upper Left Outside",  pauseAfter: "spit"   }, // 15 -> 30s
+      { seg: 2, zone: "Lower Left Outside",  pauseAfter: "switch" }, // 30 -> 45s
+      { seg: 3, zone: "Lower Right Outside", pauseAfter: "spit"   }, // 45 -> 60s
+      { seg: 4, zone: "Upper Right Inside",  pauseAfter: "switch" }, // 60 -> 75s
+      { seg: 5, zone: "Upper Left Inside",   pauseAfter: "spit"   }, // 75 -> 90s
+      { seg: 6, zone: "Lower Left Inside",   pauseAfter: "switch" }, // 90 -> 105s
+      { seg: 7, zone: "Lower Right Inside",  pauseAfter: "finish" }  // 105 -> 120s
+    ];
+
+    let elapsedBrush = 0;   // 0 to 120 seconds
+    let isRunning = false;
+    let pauseMode = null;   // null | "switch" | "spit"
+    let soundEnabled = true;
+    let timerId = null;
+    let audioCtx = null;
+
+    // DOM Elements
+    const soundToggle = document.getElementById("soundToggle");
+    const testSoundBtn = document.getElementById("testSoundBtn");
+    const statusBanner = document.getElementById("statusBanner");
+    const phaseTitle = document.getElementById("phaseTitle");
+    const phaseSub = document.getElementById("phaseSub");
+    const bigClock = document.getElementById("bigClock");
+    const stepBadge = document.getElementById("stepBadge");
+    const progressBar = document.getElementById("progressBar");
+    const rocketMarker = document.getElementById("rocketMarker");
+    const targetZoneName = document.getElementById("targetZoneName");
+    const primaryBtn = document.getElementById("primaryBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const segEls = Array.from({ length: 8 }, (_, i) => document.getElementById(`seg${i}`));
+
+    /**
+     * Safely initialize and unlock Web Audio API on first user gesture (iOS Safari/WebView compatible)
+     */
+    function unlockAudio() {
+      try {
+        if (!audioCtx) {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (AudioContextClass) {
+            audioCtx = new AudioContextClass();
+          }
+        }
+        if (audioCtx && audioCtx.state === "suspended") {
+          audioCtx.resume();
+        }
+        if (audioCtx) {
+          const buffer = audioCtx.createBuffer(1, 1, 22050);
+          const source = audioCtx.createBufferSource();
+          source.buffer = buffer;
+          source.connect(audioCtx.destination);
+          source.start(0);
+        }
+      } catch (err) {
+        console.warn("Audio unlock warning:", err);
+      }
+    }
+
+    /**
+     * Synthesize a single tone with smooth attack/release envelope
+     */
+    function playTone(freq, startTime, duration, type = "sine", peakGain = 0.28, slideTo = null) {
+      if (!soundEnabled) return;
+      unlockAudio();
+      if (!audioCtx) return;
+
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, startTime);
+      if (slideTo) {
+        osc.frequency.exponentialRampToValueAtTime(slideTo, startTime + duration);
+      }
+
+      gain.gain.setValueAtTime(0.0001, startTime);
+      gain.gain.exponentialRampToValueAtTime(peakGain, startTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.start(startTime);
+      osc.stop(startTime + duration + 0.03);
+    }
+
+    // Gentle confirmation blip when starting or confirming ready
+    function playConfirmBlip() {
+      if (!soundEnabled) return;
+      unlockAudio();
+      if (!audioCtx) return;
+      playTone(659.25, audioCtx.currentTime, 0.11, "sine", 0.22); // E5
+    }
+
+    // 15-Second Switch Sides: Crisp two-tone sci-fi radio chime (triangle D5 -> A5)
+    function playSwitchChime() {
+      if (!soundEnabled) return;
+      unlockAudio();
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+      playTone(587.33, now, 0.14, "triangle", 0.30);        // D5
+      playTone(880.00, now + 0.16, 0.24, "triangle", 0.32); // A5
+    }
+
+    // 30-Second Spit in the Sink: Double alert chime + two upward water-droplet bloops
+    function playSpitSound() {
+      if (!soundEnabled) return;
+      unlockAudio();
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+      playTone(523.25, now, 0.12, "sine", 0.28);
+      playTone(659.25, now + 0.14, 0.12, "sine", 0.28);
+      playTone(310, now + 0.30, 0.18, "sine", 0.36, 980);
+      playTone(410, now + 0.50, 0.20, "sine", 0.36, 1220);
+    }
+
+    // 2-Minute Blast Off: 4-note celebratory fanfare (C5, E5, G5, C6)
+    function playBlastOffFanfare() {
+      if (!soundEnabled) return;
+      unlockAudio();
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+      const notes = [523.25, 659.25, 783.99, 1046.50];
+      notes.forEach((n, idx) => {
+        playTone(n, now + idx * 0.14, idx === 3 ? 0.55 : 0.15, "triangle", 0.32);
+      });
+    }
+
+    function formatMMSS(sec) {
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    }
+
+    /**
+     * Render all UI elements: clock, horizontal rocket track, 8-segment dental arch, banner, and primary button
+     */
+    function render() {
+      const remaining = Math.max(0, 120 - elapsedBrush);
+      bigClock.textContent = formatMMSS(remaining);
+
+      // Update horizontal progress bar & rocket position (0% -> 100%)
+      const pct = Math.min(100, (elapsedBrush / 120) * 100);
+      progressBar.style.width = `${pct}%`;
+      rocketMarker.style.left = `${pct}%`;
+
+      const stepIdx = Math.min(7, Math.floor(elapsedBrush / 15));
+      const currentStep = INTERVALS[stepIdx];
+      const secLeftInSlice = elapsedBrush >= 120 ? 0 : (15 - (elapsedBrush % 15));
+
+      // Update Step Badge
+      if (elapsedBrush >= 120) {
+        stepBadge.textContent = "8 of 8 • Done!";
+      } else if (pauseMode) {
+        stepBadge.textContent = `Step ${stepIdx + 1} of 8 • Ready?`;
+      } else {
+        stepBadge.textContent = `Step ${stepIdx + 1} of 8 • ${secLeftInSlice}s left`;
+      }
+
+      // Update Target Zone Name & Dental Arch SVG
+      targetZoneName.textContent = elapsedBrush >= 120 ? "All Zones Clean!" : currentStep.zone;
+      segEls.forEach((el, idx) => {
+        el.classList.remove("arch-seg-active", "arch-seg-done");
+        if (elapsedBrush >= 120) {
+          el.classList.add("arch-seg-done");
+        } else if (idx === stepIdx) {
+          el.classList.add("arch-seg-active");
+        } else if (idx < stepIdx) {
+          el.classList.add("arch-seg-done");
+        }
+      });
+
+      // Reset classes before applying active state
+      statusBanner.className = "rounded-2xl px-3.5 py-2.5 text-center border transition-all duration-200 shadow-md";
+      rocketMarker.classList.remove("thrusting", "hovering");
+      primaryBtn.className = "w-full py-3.5 px-4 rounded-2xl active:scale-98 font-black text-base sm:text-lg shadow-lg transition cursor-pointer";
+
+      if (elapsedBrush >= 120) {
+        // Completed 2:00 Mission
+        statusBanner.classList.add("bg-emerald-500/20", "border-emerald-400/65");
+        phaseTitle.textContent = "🌟 BLAST OFF!";
+        phaseSub.textContent = "Mission complete! Give one final spit and rinse.";
+        rocketMarker.classList.add("hovering");
+
+        primaryBtn.textContent = "🚀 Brush Again";
+        primaryBtn.classList.add("bg-gradient-to-r", "from-emerald-400", "to-teal-500", "text-slate-950", "shadow-emerald-500/30");
+      } else if (pauseMode === "switch") {
+        // Manual 15s Switch Sides Pause (Waits indefinitely for tap)
+        statusBanner.classList.add("bg-amber-500/20", "border-amber-400/75");
+        phaseTitle.textContent = "🔄 SWITCH SIDES!";
+        phaseSub.textContent = `Move toothbrush to: ${currentStep.zone}`;
+        rocketMarker.classList.add("hovering");
+
+        primaryBtn.textContent = "🔄 Switched Sides — Tap When Ready!";
+        primaryBtn.classList.add("bg-gradient-to-r", "from-amber-400", "to-orange-500", "text-slate-950", "shadow-amber-500/30", "pulse-amber");
+      } else if (pauseMode === "spit") {
+        // Manual 30s Spit Pause (Waits indefinitely for tap)
+        statusBanner.classList.add("bg-pink-500/25", "border-pink-400/80");
+        phaseTitle.textContent = "💧 SPIT IN THE SINK!";
+        phaseSub.textContent = `Don't swallow! Next up: ${currentStep.zone}`;
+        rocketMarker.classList.add("hovering");
+
+        primaryBtn.textContent = "💧 Spat Out — Tap When Ready!";
+        primaryBtn.classList.add("bg-gradient-to-r", "from-pink-400", "to-rose-500", "text-white", "shadow-pink-500/35", "pulse-pink");
+      } else if (isRunning) {
+        // Active Brushing
+        statusBanner.classList.add("bg-sky-500/20", "border-sky-400/60");
+        phaseTitle.textContent = `🪥 Brush: ${currentStep.zone}`;
+        const nextAction =
+          currentStep.pauseAfter === "spit" ? "Spit break" :
+          currentStep.pauseAfter === "switch" ? "Switch sides" : "Blast off";
+        phaseSub.textContent = `${nextAction} in ${secLeftInSlice}s`;
+        rocketMarker.classList.add("thrusting");
+
+        primaryBtn.textContent = "⏸ Pause";
+        primaryBtn.classList.add("bg-gradient-to-r", "from-sky-400", "to-blue-600", "text-white", "shadow-sky-500/30");
+      } else {
+        // Idle or User Paused
+        statusBanner.classList.add("bg-sky-500/15", "border-sky-400/45");
+        phaseTitle.textContent = elapsedBrush === 0 ? "Ready for Liftoff!" : "Mission Paused";
+        phaseSub.textContent = elapsedBrush === 0
+          ? "Switch every 15s • Spit in sink every 30s"
+          : `Ready to brush: ${currentStep.zone}`;
+
+        primaryBtn.textContent = elapsedBrush === 0 ? "🚀 Start Brushing" : "▶️ Resume Brushing";
+        primaryBtn.classList.add("bg-gradient-to-r", "from-sky-400", "to-blue-600", "text-white", "shadow-sky-500/30");
+      }
+    }
+
+    /**
+     * 1-second timer tick: stops completely at 15s and 30s marks until user taps confirm
+     */
+    function onTick() {
+      if (!isRunning || pauseMode) return;
+
+      elapsedBrush += 1;
+
+      if (elapsedBrush >= 120) {
+        isRunning = false;
+        clearInterval(timerId);
+        playBlastOffFanfare();
+        render();
+        return;
+      }
+
+      if (elapsedBrush % 30 === 0) {
+        isRunning = false;
+        clearInterval(timerId);
+        pauseMode = "spit";
+        playSpitSound();
+      } else if (elapsedBrush % 15 === 0) {
+        isRunning = false;
+        clearInterval(timerId);
+        pauseMode = "switch";
+        playSwitchChime();
+      }
+
+      render();
+    }
+
+    // Primary Button handles Start, Pause, Resume, Tap-to-Confirm, and Brush Again
+    primaryBtn.addEventListener("click", () => {
+      unlockAudio();
+
+      if (elapsedBrush >= 120) {
+        // Restart mission
+        elapsedBrush = 0;
+        pauseMode = null;
+        isRunning = true;
+        playConfirmBlip();
+        clearInterval(timerId);
+        timerId = setInterval(onTick, 1000);
+        render();
+        return;
+      }
+
+      if (pauseMode) {
+        // User tapped confirm after switching sides or spitting
+        pauseMode = null;
+        isRunning = true;
+        playConfirmBlip();
+        clearInterval(timerId);
+        timerId = setInterval(onTick, 1000);
+        render();
+        return;
+      }
+
+      // Toggle Start / Pause
+      isRunning = !isRunning;
+      clearInterval(timerId);
+      if (isRunning) {
+        playConfirmBlip();
+        timerId = setInterval(onTick, 1000);
+      }
+      render();
+    });
+
+    resetBtn.addEventListener("click", () => {
+      isRunning = false;
+      clearInterval(timerId);
+      elapsedBrush = 0;
+      pauseMode = null;
+      render();
+    });
+
+    soundToggle.addEventListener("click", () => {
+      soundEnabled = !soundEnabled;
+      soundToggle.textContent = soundEnabled ? "🔊 Sound" : "🔇 Muted";
+      if (soundEnabled) unlockAudio();
+    });
+
+    testSoundBtn.addEventListener("click", () => {
+      unlockAudio();
+      playSwitchChime();
+      setTimeout(() => {
+        playSpitSound();
+      }, 650);
+    });
+
+    // Initial render
+    render();
+  </script>
+</body>
+</html>
